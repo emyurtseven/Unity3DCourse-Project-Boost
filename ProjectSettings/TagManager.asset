@@ -9,11 +9,11 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
-  - 
-  - 
+  - Debris
+  - Particle
   - 
   - 
   - 
@@ -44,4 +44,7 @@ TagManager:
     locked: 0
   - name: Effects
     uniqueID: 2001967043
+    locked: 0
+  - name: UI
+    uniqueID: 3023495427
     locked: 0

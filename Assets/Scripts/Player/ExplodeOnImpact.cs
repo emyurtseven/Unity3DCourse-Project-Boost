@@ -28,6 +28,7 @@ public class ExplodeOnImpact : MonoBehaviour
     string containerName = "DebrisContainer";
 
     Transform containerTransform;
+    GameObject debrisContainer;
 
     public float DebrisPersistTime { get { return debrisPersistTime; } set { debrisPersistTime = value; } }
     public Transform ContainerTransform {get { return containerTransform; } }
@@ -71,13 +72,13 @@ public class ExplodeOnImpact : MonoBehaviour
         AddExplosionForce(collisionPoint, colliderRadius);
 
         StartCoroutine(DisableComponents());
-        StartCoroutine(CleanDebris());
+        StartCoroutine(FadeDebris());
     }
 
     private void CreateDebrisContainer()
     {
-        GameObject debrisContainer = new GameObject(containerName);
-        debrisContainer.transform.parent = transform;
+        debrisContainer = new GameObject(containerName);
+        // debrisContainer.transform.parent = transform;
         containerTransform = debrisContainer.transform;
     }
 
@@ -121,6 +122,10 @@ public class ExplodeOnImpact : MonoBehaviour
             {
                 Destroy(piece.gameObject);
             }
+            else
+            {
+                piece.gameObject.layer = LayerMask.NameToLayer("Debris");
+            }
         }
     }
 
@@ -139,14 +144,29 @@ public class ExplodeOnImpact : MonoBehaviour
         }
     }
 
+
     /// <summary>
-    /// Cleans exploded debris after some delay.
+    /// Gradually decreases the alpha of mesh renderers to gently fade out the pieces, then destroys the game object.
     /// </summary>
     /// <returns></returns>
-    IEnumerator CleanDebris()
+    private IEnumerator FadeDebris()
     {
-        yield return new WaitForSeconds(DebrisPersistTime);
+        yield return new WaitForSeconds(debrisPersistTime);
 
-        Destroy(gameObject);
+        float alpha = 1;
+        while (alpha > 0)
+        {
+            alpha -= 0.02f;
+            Color color = new Color(1, 1, 1, alpha);
+
+            foreach (Transform fragment in containerTransform)
+            {
+                fragment.gameObject.GetComponent<MeshRenderer>().materials[0].color = color;
+            }
+
+            yield return new WaitForSeconds(Time.deltaTime);
+        }
+
+        Destroy(debrisContainer);
     }
 }

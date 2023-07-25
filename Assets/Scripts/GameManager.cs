@@ -6,18 +6,21 @@ using Cinemachine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] GameObject playerPrefab;
+    [SerializeField] float skyboxRotationSpeed = 1f;
+
+    [SerializeField] Tutorial tutorial;
     [SerializeField] AudioClip levelFinishedSfx;
     [SerializeField] float levelLoadDelay;
 
     GameObject player;
     CollisionHandler playerCollision;
-    Movement playerMovement;
+    PlayerMovement playerMovement;
     Vector3 startPosition;
     Quaternion startRotation;
     CinemachineVirtualCamera followCam;
 
     float respawnDelay;
+    float skyboxStartRotation = 145f;
 
     void Awake()
     {
@@ -35,11 +38,29 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
+    void Update()
+    {
+        RenderSettings.skybox.SetFloat("_Rotation", skyboxStartRotation + Time.time * skyboxRotationSpeed);
+    }
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="scene"> Unused parameter, required for delegate </param>
+    /// <param name="nextScene"> Unused parameter, required for delegate </param>
     private void InitializeLevel(Scene scene, Scene nextScene)
     {
+        // Return if we're at main menu scene
+        if (SceneManager.GetActiveScene().buildIndex == 0)
+        {
+            return;
+        }
+
         player = GameObject.FindGameObjectWithTag("Player");
         playerCollision = player.GetComponent<CollisionHandler>();
-        playerMovement = player.GetComponent<Movement>();
+        playerMovement = player.GetComponent<PlayerMovement>();
         followCam = FindObjectOfType<CinemachineVirtualCamera>();
         startPosition = player.transform.position;
         startRotation = player.transform.rotation;
@@ -62,21 +83,34 @@ public class GameManager : MonoBehaviour
 
     IEnumerator RespawnCoroutine()
     {
-        // No need to enable later since we instantiate a new Player with default values = true
         playerCollision.IsInteractable = false;   
         playerMovement.ControlsEnabled = false;
 
         yield return new WaitForSeconds(respawnDelay);
 
-        player = Instantiate(playerPrefab, startPosition, startRotation);
-        playerCollision = player.GetComponent<CollisionHandler>();
-        playerMovement = player.GetComponent<Movement>();
-        followCam.Follow = player.transform;
+        player.transform.rotation = startRotation;
+        player.transform.position = startPosition;
+        playerCollision.IsInteractable = true;
+        playerMovement.ControlsEnabled = true;
+
+        player.GetComponent<MeshRenderer>().enabled = true;
+        player.GetComponent<Rigidbody>().useGravity = true;
+        player.GetComponent<Rigidbody>().isKinematic = false;
+
+        foreach (var item in player.GetComponents<Collider>())
+        {
+            item.enabled = true;
+        }
+
+        foreach (Transform child in player.transform)
+        {
+            child.gameObject.SetActive(true);
+        }
     }
 
     IEnumerator LoadNextLevelCoroutine()
     {
-        GetComponent<AudioSource>().PlayOneShot(levelFinishedSfx);
+        AudioManager.PlayOnce(AudioClipName.LevelFinished);
         // No need to enable later since we load a new scene with default values = true
         playerCollision.IsInteractable = false;
         playerMovement.ControlsEnabled = false;

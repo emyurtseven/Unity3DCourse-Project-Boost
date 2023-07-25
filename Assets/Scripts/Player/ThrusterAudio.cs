@@ -34,11 +34,11 @@ public class ThrusterAudio : MonoBehaviour
     {
         if (audioClipName == AudioClipName.MainThruster)
         {
-            audioSource.clip = transform.parent.GetComponent<Movement>().mainThrusterSfx;
+            audioSource.clip = transform.parent.GetComponent<PlayerMovement>().mainThrusterSfx;
         }
         else if (audioClipName == AudioClipName.SideThruster)
         {
-            audioSource.clip = transform.parent.GetComponent<Movement>().sideThrusterSfx;
+            audioSource.clip = transform.parent.GetComponent<PlayerMovement>().sideThrusterSfx;
         }
 
         // Get target time values from curves set in the editor

@@ -93,6 +93,11 @@ public class CollisionHandler : MonoBehaviour
 
     private void HandlePlayerCrash(Collision collisionData)
     {
+        if (exploder == null)
+        {
+            return;
+        }
+        
         if (isInvulnerable)
         {
             return;
