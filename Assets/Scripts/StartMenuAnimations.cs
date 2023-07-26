@@ -13,67 +13,72 @@ public class StartMenuAnimations : MonoBehaviour
     [SerializeField] float departingRocketThrust = 1f;
 
     [Header("Object references")]
-    [SerializeField] GameObject landingRocket;
-    [SerializeField] GameObject departingRocket;
-    [SerializeField] Transform landingPad;
-    [SerializeField] Transform launchPad;
-
-    PlayerMovement landingRocketMovement;
-    PlayerMovement departingRocketMovement;
-
-    Rigidbody landingRocketRigidbody;
-    Rigidbody departingRocketRigidbody;
-
-    bool landingInputOn;
-
+    [SerializeField] GameObject redRocket;
+    [SerializeField] GameObject blueRocket;
+    [SerializeField] GameObject orangeRocket;
+    [SerializeField] Transform greenPad;
+    [SerializeField] Transform grayPad;
 
     void Start()
     {
+        StartCoroutine(AnimationsCoroutine());
+    }
+
+    IEnumerator AnimationsCoroutine()
+    {
+        yield return new WaitForSeconds(liftoffSequenceDelay);
+        StartLiftoffSequence(blueRocket, grayPad);
+
+        yield return new WaitForSeconds(landingSequenceDelay);
+
+        StartLandingSequence(redRocket, greenPad);
+
+        yield return new WaitForSeconds(landingSequenceDelay + 5);
+
+        StartLiftoffSequence(redRocket, greenPad);
+
+        yield return new WaitForSeconds(1);
+
+        orangeRocket.GetComponent<Rigidbody>().useGravity = true;
+
+        yield return new WaitForSeconds(landingSequenceDelay + 2);
+
+        StartLandingSequence(redRocket, grayPad);
+        StartLandingSequence(blueRocket, greenPad);
+    }
+
+    void StartLandingSequence(GameObject landingRocket, Transform landingPad)
+    {
         landingRocket.transform.position = landingPad.transform.position + Vector3.up * 25;
-        landingRocketMovement = landingRocket.GetComponent<PlayerMovement>();
+        Rigidbody landingRocketRigidbody = landingRocket.GetComponent<Rigidbody>();
+        landingRocketRigidbody.useGravity = true;
+
+        PlayerMovement landingRocketMovement = landingRocket.GetComponent<PlayerMovement>();
         landingRocketMovement.ControlsEnabled = false;
-        landingRocketRigidbody = landingRocket.GetComponent<Rigidbody>();
-        landingRocketRigidbody.isKinematic = true;
-
-        departingRocketMovement = departingRocket.GetComponent<PlayerMovement>();
-        departingRocketRigidbody = departingRocket.GetComponent<Rigidbody>();
-        departingRocketMovement.ControlsEnabled = false;
-
         landingRocketMovement.MainThrustForce = landingRocketThrust;
+
+        StartCoroutine(SimulateLanding(landingRocketRigidbody, landingRocketMovement));
+    }
+
+    void StartLiftoffSequence(GameObject departingRocket, Transform launchPad)
+    {
+        departingRocket.transform.position = launchPad.transform.position + Vector3.up * 1.22f;
+        PlayerMovement departingRocketMovement = departingRocket.GetComponent<PlayerMovement>();
+        Rigidbody departingRocketRigidbody = departingRocket.GetComponent<Rigidbody>();
+        departingRocketMovement.ControlsEnabled = false;
         departingRocketMovement.MainThrustForce = departingRocketThrust;
+        departingRocketRigidbody.useGravity = true;
 
-        Invoke("StartLandingSequence", landingSequenceDelay);
-        Invoke("StartLiftoffSequence", liftoffSequenceDelay);
+        StartCoroutine(SimulateLiftoff(departingRocket, departingRocketRigidbody, departingRocketMovement));
     }
 
-    void Update()
+    IEnumerator SimulateLanding(Rigidbody landingRocketRigidbody, PlayerMovement landingRocketMovement)
     {
-        if (landingInputOn || landingRocket == null)
+        while (landingRocketRigidbody.velocity.y > -8.5f)
         {
-            return;
+            yield return new WaitForEndOfFrame();
         }
 
-        if (landingRocketRigidbody.velocity.y < -8.5f)
-        {
-            landingInputOn = true;
-            StartCoroutine(SimulateLanding());
-        }
-    }
-
-
-
-    void StartLandingSequence()
-    {
-        landingRocketRigidbody.isKinematic = false;
-    }
-
-    void StartLiftoffSequence()
-    {
-        StartCoroutine(SimulateLiftoff());
-    }
-
-    IEnumerator SimulateLanding()
-    {
         while (landingRocketRigidbody.velocity.y < -0.1f)
         {
             landingRocketMovement.ProcessInput(true, 0);
@@ -81,34 +86,15 @@ public class StartMenuAnimations : MonoBehaviour
         }
 
         landingRocketMovement.ProcessInput(false, 0);
-        landingInputOn = false;
-
-        yield return new WaitForSeconds(5f);
-
-        landingRocketMovement.MainThrustForce = 12f;
-
-        while (landingRocket.transform.position.y < 25)
-        {
-            landingRocketMovement.ProcessInput(true, 0.05f);
-            yield return new WaitForEndOfFrame();
-        }
-
-        landingRocketMovement.ProcessInput(false, 0);
-        Destroy(landingRocket);
     }
 
-    IEnumerator SimulateLiftoff()
+    IEnumerator SimulateLiftoff(GameObject departingRocket, Rigidbody departingRocketRigidbody, PlayerMovement departingRocketMovement)
     {
         float thrustDirection = Random.Range(-0.1f, 0.1f);
 
         while (true)
         {
-
-            if (departingRocket.transform.position.y < 6)
-            {
-                departingRocketMovement.ProcessInput(true, 0f);
-            }
-            else if (Mathf.Abs(departingRocket.transform.rotation.z) < 0.12f)
+            if (Mathf.Abs(departingRocket.transform.rotation.z) < 0.12f)
             {
                 departingRocketMovement.ProcessInput(true, thrustDirection);
             }
@@ -120,9 +106,12 @@ public class StartMenuAnimations : MonoBehaviour
             yield return new WaitForEndOfFrame();
 
             
-            if (departingRocket.transform.position.y > 30)
+            if (departingRocket.transform.position.y > 35)
             {
-                Destroy(departingRocket);
+                departingRocketMovement.ProcessInput(false, 0f);
+                departingRocketRigidbody.velocity = Vector3.zero;
+                departingRocket.transform.rotation = Quaternion.identity;
+                departingRocketRigidbody.useGravity = false;
                 yield break;
             }
         }

@@ -433,6 +433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 560d47f5f9863b14b90d6a3da4277d04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  controlsEnabled: 1
   mainThrustForce: 20
   rotationThrustForce: 160
   mainThruster: {fileID: 8937838848110175192}
@@ -453,7 +454,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 974758e2ac39fb0448d399cdb94a44ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  explosionSfx: {fileID: 8300000, guid: 58f8520c3dc493642b267d3f37b3449f, type: 3}
   respawnDelay: 2.5
   finishConditionTimer: 0.5
   deathThresholdVelocity: 6
@@ -475,6 +475,7 @@ MonoBehaviour:
   thresholdVelocity: 0
   explodedObjectPrefab: {fileID: 2525026665585652842, guid: c0d577831657ab74ab09e2fc4b8f6194, type: 3}
   explosionPrefab: {fileID: 1489096066996960305, guid: 3089b741182875f47b071a5308b3a1f7, type: 3}
+  explosionSfx: {fileID: 8300000, guid: 58f8520c3dc493642b267d3f37b3449f, type: 3}
   minExplosionForce: 100
   maxExplosionForce: 250
   brokenPartCount: 50

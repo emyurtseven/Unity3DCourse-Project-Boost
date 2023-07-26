@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        AudioListener.volume = 1f;
         int instanceCount = FindObjectsOfType<GameManager>().Length;
 
         if (instanceCount > 1)

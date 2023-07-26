@@ -34,7 +34,7 @@ public class StartMenuManager : MonoBehaviour
     public void OnNewGameClicked()
     {
         AudioManager.FadeOutAudio(0, 1f);
-        StartCoroutine(StartCameraTransition());
+        StartCoroutine(StartNewGameTransition());
     }
     public void OnContinueClicked()
     {
@@ -51,19 +51,39 @@ public class StartMenuManager : MonoBehaviour
         Application.Quit();
     }
 
-    IEnumerator StartCameraTransition()
+    IEnumerator StartNewGameTransition()
     {
-        mainCameraAnimator.SetTrigger("NewGamePressed");
-
-        yield return new WaitForSeconds(0.2f);
-
-        while(mainCameraAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1)
+        while(startMenuCanvas.GetComponent<CanvasGroup>().alpha > 0)
         {
-            startMenuCanvas.GetComponent<CanvasGroup>().alpha -= Time.deltaTime * 2;
+            startMenuCanvas.GetComponent<CanvasGroup>().alpha -= Time.deltaTime;
+
+            if (startMenuCanvas.GetComponent<CanvasGroup>().alpha < 0.7f)
+            {
+                mainCameraAnimator.SetTrigger("NewGamePressed");
+            }
+
+            AudioListener.volume -= Time.deltaTime;
             yield return new WaitForEndOfFrame();
         }
 
+        yield return new WaitUntil(() => (mainCameraAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1));
+
         SceneManager.LoadScene(1);
     }
+
+    // IEnumerator StartCameraTransition()
+    // {
+    //     mainCameraAnimator.SetTrigger("NewGamePressed");
+
+    //     yield return new WaitForSeconds(0.2f);
+
+    //     while (mainCameraAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1)
+    //     {
+    //         startMenuCanvas.GetComponent<CanvasGroup>().alpha -= Time.deltaTime * 2;
+    //         yield return new WaitForEndOfFrame();
+    //     }
+
+    //     SceneManager.LoadScene(1);
+    // }
     
 }

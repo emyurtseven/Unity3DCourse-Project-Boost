@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [SerializeField] bool controlsEnabled = true;
+
     [SerializeField] float mainThrustForce = 20f;
     [SerializeField] float rotationThrustForce = 80f;
 
@@ -26,7 +28,6 @@ public class PlayerMovement : MonoBehaviour
     Light mainThrusterLight;
 
     float timeElapsed;
-    bool controlsEnabled = true;
 
     public bool ControlsEnabled { get { return controlsEnabled; } set { controlsEnabled = value; } }
     public float MainThrustForce { get => mainThrustForce; set => mainThrustForce = value; }

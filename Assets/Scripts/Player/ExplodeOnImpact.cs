@@ -6,6 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class ExplodeOnImpact : MonoBehaviour
 {
+
     [Header("Auto-explode options")]
     [SerializeField] bool willAutoExplode;
     [SerializeField] bool hasParticleEffects;
@@ -15,6 +16,8 @@ public class ExplodeOnImpact : MonoBehaviour
     [Header("Prefab of the object")]
     [SerializeField] GameObject explodedObjectPrefab;
     [SerializeField] GameObject explosionPrefab;
+    [SerializeField] AudioClip explosionSfx;
+
 
     [Header("Explosion parameters")]
     [Range(0, 1000)]
@@ -71,6 +74,8 @@ public class ExplodeOnImpact : MonoBehaviour
         AdjustBrokenPartCount();
         AddExplosionForce(collisionPoint, colliderRadius);
 
+        GetComponent<AudioSource>().PlayOneShot(explosionSfx, 1);
+
         StartCoroutine(DisableComponents());
         StartCoroutine(FadeDebris());
     }
@@ -78,7 +83,6 @@ public class ExplodeOnImpact : MonoBehaviour
     private void CreateDebrisContainer()
     {
         debrisContainer = new GameObject(containerName);
-        // debrisContainer.transform.parent = transform;
         containerTransform = debrisContainer.transform;
     }
 

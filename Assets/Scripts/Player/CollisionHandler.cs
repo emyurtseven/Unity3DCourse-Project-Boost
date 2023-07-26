@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class CollisionHandler : MonoBehaviour
 {
-    [SerializeField] AudioClip explosionSfx;
     [SerializeField] float respawnDelay = 2f;
     [SerializeField] float finishConditionTimer = 2f;
     [SerializeField] float deathThresholdVelocity = 2f;
@@ -103,7 +102,6 @@ public class CollisionHandler : MonoBehaviour
             return;
         }
 
-        GetComponent<AudioSource>().PlayOneShot(explosionSfx, 1);
         exploder.ExplodeObject(collisionData);
         gameManager = FindObjectOfType<GameManager>();
         gameManager.RespawnPlayer();
