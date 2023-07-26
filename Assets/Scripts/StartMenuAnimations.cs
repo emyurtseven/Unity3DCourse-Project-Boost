@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class StartMenuAnimations : MonoBehaviour
 {
+    
     [Header("Start menu parameters")]
     [SerializeField] float landingSequenceDelay = 1f;
     [SerializeField] float liftoffSequenceDelay = 1f;
@@ -59,6 +60,8 @@ public class StartMenuAnimations : MonoBehaviour
         }
     }
 
+
+
     void StartLandingSequence()
     {
         landingRocketRigidbody.isKinematic = false;
@@ -86,7 +89,7 @@ public class StartMenuAnimations : MonoBehaviour
 
         while (landingRocket.transform.position.y < 25)
         {
-            landingRocketMovement.ProcessInput(true, 0f);
+            landingRocketMovement.ProcessInput(true, 0.05f);
             yield return new WaitForEndOfFrame();
         }
 

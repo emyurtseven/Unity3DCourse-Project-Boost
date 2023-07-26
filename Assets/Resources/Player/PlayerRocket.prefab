@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1402275601}
   - component: {fileID: 1402275602}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Head Lights
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1648307892}
   - component: {fileID: 1648307893}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Head Lights (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -206,7 +206,7 @@ GameObject:
   - component: {fileID: 6818582476457163140}
   - component: {fileID: 6818582476457163167}
   - component: {fileID: 8937838848403068118}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: PlayerRocket
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -492,7 +492,7 @@ GameObject:
   - component: {fileID: 39821778936897280}
   - component: {fileID: 27439067}
   - component: {fileID: 27439066}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Side Thrusters
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5522,7 +5522,7 @@ GameObject:
   - component: {fileID: 1246320765}
   - component: {fileID: 1246320766}
   - component: {fileID: 1446626362}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Main Thruster
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -24,7 +24,6 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        
         int instanceCount = FindObjectsOfType<GameManager>().Length;
 
         if (instanceCount > 1)
@@ -57,6 +56,13 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
+        // Start in-game music if we're in a new game
+        else if (SceneManager.GetActiveScene().buildIndex == 1)
+        {
+            Camera.main.GetComponent<Animator>().SetTrigger("LevelStarted");
+            AudioManager.PlayMusicFadeIn(AudioClipName.LevelMusic, 1, 2, 0.75f);
+        }
+        
 
         player = GameObject.FindGameObjectWithTag("Player");
         playerCollision = player.GetComponent<CollisionHandler>();

@@ -7,46 +7,34 @@ using TMPro;
 
 public class StartMenuManager : MonoBehaviour
 {
+    [SerializeField] GameObject startMenuCanvas;
     [SerializeField] Button[] mainMenuButtons;
     [SerializeField] GameObject optionsMenu;
     [SerializeField] AudioSource menuMusic;
 
-    [SerializeField] float menuMusicStartDelay = 0.5f;
+    [SerializeField] float menuMusicStartDelay = 1f;
     [SerializeField] float menuMusicFadeInDuration = 1f;
+
+    Animator mainCameraAnimator;
 
     private void Start() 
     {
-        optionsMenu.SetActive(false);
+        mainCameraAnimator = Camera.main.gameObject.GetComponent<Animator>();
 
+        optionsMenu.SetActive(false);
 
         mainMenuButtons[0].onClick.AddListener(OnNewGameClicked);
         mainMenuButtons[1].onClick.AddListener(OnContinueClicked);
         mainMenuButtons[2].onClick.AddListener(OnOptionsClicked);
         mainMenuButtons[3].onClick.AddListener(OnQuitClicked);
 
-        StartCoroutine(FadeInAudio(menuMusicFadeInDuration));
-    }
-
-    IEnumerator FadeInAudio(float seconds)
-    {
-        yield return new WaitForSeconds(menuMusicStartDelay);
-
-        AudioManager.PlayMusic(AudioClipName.StartMenuMusic, 0);
-
-        float volume = 0f;
-        while (volume < 1f)
-        {
-            // increment volume and pitch timer values
-            volume += (Time.deltaTime / seconds);
-            // set volume based on volume curve set in editor, mapping timer to volume
-            menuMusic.volume = volume;
-            yield return new WaitForEndOfFrame();
-        }
+        AudioManager.PlayMusicFadeIn(AudioClipName.StartMenuMusic, 1, menuMusicFadeInDuration, menuMusicStartDelay);
     }
 
     public void OnNewGameClicked()
     {
-        SceneManager.LoadScene(1);
+        AudioManager.FadeOutAudio(0, 1f);
+        StartCoroutine(StartCameraTransition());
     }
     public void OnContinueClicked()
     {
@@ -61,6 +49,21 @@ public class StartMenuManager : MonoBehaviour
     {
         Debug.Log("Quit");
         Application.Quit();
+    }
+
+    IEnumerator StartCameraTransition()
+    {
+        mainCameraAnimator.SetTrigger("NewGamePressed");
+
+        yield return new WaitForSeconds(0.2f);
+
+        while(mainCameraAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1)
+        {
+            startMenuCanvas.GetComponent<CanvasGroup>().alpha -= Time.deltaTime * 2;
+            yield return new WaitForEndOfFrame();
+        }
+
+        SceneManager.LoadScene(1);
     }
     
 }
