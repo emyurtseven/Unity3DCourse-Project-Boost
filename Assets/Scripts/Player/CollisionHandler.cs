@@ -26,7 +26,7 @@ public class CollisionHandler : MonoBehaviour
 
     void Awake()
     {
-        gameManager = FindObjectOfType<GameManager>();
+        gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
         exploder = GetComponent<ExplodeOnImpact>();
         bodyCollider = GetComponent<CapsuleCollider>();
         landingCollider = GetComponent<BoxCollider>();
@@ -103,14 +103,14 @@ public class CollisionHandler : MonoBehaviour
         }
 
         exploder.ExplodeObject(collisionData);
-        gameManager = FindObjectOfType<GameManager>();
+        // gameManager = FindObjectOfType<GameManager>();
         gameManager.RespawnPlayer();
     }
 
     private void HandlePlayerVictory()
     {
         GameObject.FindGameObjectWithTag("Finish").GetComponentInChildren<ParticleSystem>().Play();
-        gameManager = FindObjectOfType<GameManager>();
+        // gameManager = FindObjectOfType<GameManager>();
         gameManager.LoadNextLevel();
     }
 }

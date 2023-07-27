@@ -433,7 +433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 560d47f5f9863b14b90d6a3da4277d04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controlsEnabled: 1
+  controlsEnabled: 0
   mainThrustForce: 20
   rotationThrustForce: 160
   mainThruster: {fileID: 8937838848110175192}

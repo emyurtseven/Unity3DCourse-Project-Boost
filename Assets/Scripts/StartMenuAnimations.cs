@@ -23,6 +23,7 @@ public class StartMenuAnimations : MonoBehaviour
     {
         StartCoroutine(AnimationsCoroutine());
     }
+    
 
     IEnumerator AnimationsCoroutine()
     {

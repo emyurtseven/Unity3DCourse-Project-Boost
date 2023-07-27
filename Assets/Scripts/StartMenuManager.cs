@@ -7,83 +7,115 @@ using TMPro;
 
 public class StartMenuManager : MonoBehaviour
 {
-    [SerializeField] GameObject startMenuCanvas;
-    [SerializeField] Button[] mainMenuButtons;
-    [SerializeField] GameObject optionsMenu;
-    [SerializeField] AudioSource menuMusic;
+    [SerializeField] int firstLevelSceneIndex = 1;
 
+
+    [Header("Panel object references")]
+    [SerializeField] GameObject startMenuCanvas;
+    [SerializeField] GameObject optionsMenu;
+    [SerializeField] GameObject loadFailedPanel;
+    [SerializeField] GameObject continueConfirmPanel;
+
+    [Header("Audio controls")]
+    [SerializeField] float volume;
     [SerializeField] float menuMusicStartDelay = 1f;
     [SerializeField] float menuMusicFadeInDuration = 1f;
+    [SerializeField] AudioSource menuMusicSource;
+    [SerializeField] Slider volumeSlider;
+    [SerializeField] TextMeshProUGUI volumeValueText;
+
+    bool musicOn;
+
+    int loadedLevel;
 
     Animator mainCameraAnimator;
+    GameManager gameManager;
 
     private void Start() 
     {
         mainCameraAnimator = Camera.main.gameObject.GetComponent<Animator>();
-
-        optionsMenu.SetActive(false);
-
-        mainMenuButtons[0].onClick.AddListener(OnNewGameClicked);
-        mainMenuButtons[1].onClick.AddListener(OnContinueClicked);
-        mainMenuButtons[2].onClick.AddListener(OnOptionsClicked);
-        mainMenuButtons[3].onClick.AddListener(OnQuitClicked);
-
+        gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
         AudioManager.PlayMusicFadeIn(AudioClipName.StartMenuMusic, 1, menuMusicFadeInDuration, menuMusicStartDelay);
     }
 
-    public void OnNewGameClicked()
+    public void SetVolume(float volume)
     {
-        AudioManager.FadeOutAudio(0, 1f);
-        StartCoroutine(StartNewGameTransition());
+        AudioListener.volume = volume;
+        volumeValueText.text = volume.ToString() + " %";
     }
-    public void OnContinueClicked()
+
+    public void ToggleMusic(bool value)
     {
-        Debug.Log("Load Game");
 
     }
-    public void OnOptionsClicked()
+
+    public void ApplyVolumeSettings()
+    {
+        PlayerPrefs.SetFloat("masterVolume", AudioListener.volume);
+    }
+
+    public void OnNewGameConfirmed()
+    {
+        AudioManager.FadeOutMusic(0, 1f);
+        gameManager.LevelStartedFromMainMenu = true;
+        StartCoroutine(StartSceneTransition(firstLevelSceneIndex));
+    }
+
+    public void OnContinueClicked()
+    {
+        if (PlayerPrefs.HasKey("SavedLevel"))
+        {
+            loadedLevel = PlayerPrefs.GetInt("SavedLevel", 1);
+            string template = $"Continue to level {loadedLevel} ?";
+            continueConfirmPanel.SetActive(true);
+            continueConfirmPanel.GetComponent<TextMeshProUGUI>().text = template;
+        }
+        else
+        {
+            loadFailedPanel.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// This assumes level scene index is the same as level number.
+    /// </summary>
+    public void OnContinueConfirmed()
+    {
+        AudioManager.FadeOutMusic(0, 1f);
+        gameManager.LevelStartedFromMainMenu = true;
+        StartCoroutine(StartSceneTransition(loadedLevel));
+    }
+
+    public void OnSettingsClicked()
     {
         optionsMenu.SetActive(!optionsMenu.activeSelf);
     }
+
     public void OnQuitClicked()
     {
         Debug.Log("Quit");
         Application.Quit();
     }
 
-    IEnumerator StartNewGameTransition()
+    IEnumerator StartSceneTransition(int sceneIndex)
     {
-        while(startMenuCanvas.GetComponent<CanvasGroup>().alpha > 0)
-        {
-            startMenuCanvas.GetComponent<CanvasGroup>().alpha -= Time.deltaTime;
+        CanvasGroup menuCanvasGroup = startMenuCanvas.GetComponent<CanvasGroup>();
 
-            if (startMenuCanvas.GetComponent<CanvasGroup>().alpha < 0.7f)
+        while(menuCanvasGroup.alpha > 0)
+        {
+            menuCanvasGroup.alpha -= Time.deltaTime;
+            AudioListener.volume -= Time.deltaTime;
+
+            if (menuCanvasGroup.alpha < 0.8f)
             {
                 mainCameraAnimator.SetTrigger("NewGamePressed");
             }
 
-            AudioListener.volume -= Time.deltaTime;
             yield return new WaitForEndOfFrame();
         }
 
         yield return new WaitUntil(() => (mainCameraAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1));
 
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(sceneIndex);
     }
-
-    // IEnumerator StartCameraTransition()
-    // {
-    //     mainCameraAnimator.SetTrigger("NewGamePressed");
-
-    //     yield return new WaitForSeconds(0.2f);
-
-    //     while (mainCameraAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1)
-    //     {
-    //         startMenuCanvas.GetComponent<CanvasGroup>().alpha -= Time.deltaTime * 2;
-    //         yield return new WaitForEndOfFrame();
-    //     }
-
-    //     SceneManager.LoadScene(1);
-    // }
-    
 }

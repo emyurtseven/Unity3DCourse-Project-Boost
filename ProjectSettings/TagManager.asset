@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Safe
+  - FollowCamera
+  - GameManager
   layers:
   - Default
   - TransparentFX

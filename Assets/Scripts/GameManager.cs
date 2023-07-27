@@ -12,6 +12,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] AudioClip levelFinishedSfx;
     [SerializeField] float levelLoadDelay;
 
+    bool levelStartedFromMainMenu;
+
     GameObject player;
     CollisionHandler playerCollision;
     PlayerMovement playerMovement;
@@ -22,9 +24,17 @@ public class GameManager : MonoBehaviour
     float respawnDelay;
     float skyboxStartRotation = 145f;
 
+    public bool LevelStartedFromMainMenu { get => levelStartedFromMainMenu; set => levelStartedFromMainMenu = value; }
+
     void Awake()
     {
+        SingletonThisObject();
+        
         AudioListener.volume = 1f;
+    }
+
+    private void SingletonThisObject()
+    {
         int instanceCount = FindObjectsOfType<GameManager>().Length;
 
         if (instanceCount > 1)
@@ -38,7 +48,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
     void Update()
     {
         RenderSettings.skybox.SetFloat("_Rotation", skyboxStartRotation + Time.time * skyboxRotationSpeed);
@@ -46,7 +55,8 @@ public class GameManager : MonoBehaviour
 
 
     /// <summary>
-    /// 
+    /// SceneManager.activeSceneChanged is executed after Awake, before Start.
+    /// This function is ran whenever a scene is loaded.  
     /// </summary>
     /// <param name="scene"> Unused parameter, required for delegate </param>
     /// <param name="nextScene"> Unused parameter, required for delegate </param>
@@ -57,18 +67,33 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        // Start in-game music if we're in a new game
-        else if (SceneManager.GetActiveScene().buildIndex == 1)
-        {
-            Camera.main.GetComponent<Animator>().SetTrigger("LevelStarted");
-            AudioManager.PlayMusicFadeIn(AudioClipName.LevelMusic, 1, 2, 0.75f);
-        }
-        
 
+        InitializeCamera();
+        InitializePlayerRocket();
+    }
+
+    private void InitializeCamera()
+    {
+        // Start in-game music if we're in a new game
+        if (levelStartedFromMainMenu)
+        {
+            AudioManager.PlayMusicFadeIn(AudioClipName.LevelMusic, 1, 2, 0.75f); 
+            Camera.main.transform.eulerAngles = new Vector3(-90, 0, 0);
+            Camera.main.GetComponent<Animator>().SetTrigger("LevelStarted");
+
+        }
+        else
+        {
+            Camera.main.GetComponent<CinemachineBrain>().enabled = true;
+        }
+    }
+
+    private void InitializePlayerRocket()
+    {
         player = GameObject.FindGameObjectWithTag("Player");
         playerCollision = player.GetComponent<CollisionHandler>();
         playerMovement = player.GetComponent<PlayerMovement>();
-        followCam = FindObjectOfType<CinemachineVirtualCamera>();
+        followCam = GameObject.FindGameObjectWithTag("FollowCamera").GetComponent<CinemachineVirtualCamera>();
         startPosition = player.transform.position;
         startRotation = player.transform.rotation;
         respawnDelay = playerCollision.RespawnDelay;
@@ -85,6 +110,7 @@ public class GameManager : MonoBehaviour
 
     public void LoadNextLevel()
     {
+        levelStartedFromMainMenu = false;
         StartCoroutine(LoadNextLevelCoroutine());
     }
 
@@ -117,7 +143,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator LoadNextLevelCoroutine()
     {
-        AudioManager.PlayOnce(AudioClipName.LevelFinished);
+        AudioManager.PlaySfx(AudioClipName.LevelFinished);
         // No need to enable later since we load a new scene with default values = true
         playerCollision.IsInteractable = false;
         playerMovement.ControlsEnabled = false;

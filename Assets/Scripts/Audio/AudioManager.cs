@@ -8,9 +8,11 @@ using UnityEngine;
 /// </summary>
 public static class AudioManager
 {
-    static bool initialized = false;
-    static AudioSource audioSource;
-    static GameAudioSource gameAudioSource;
+    static bool musicInitialized = false;
+    static bool sfxInitialized = false;
+
+    static MusicPlayer musicPlayer;
+    static SoundEffectsPlayer sfxPlayer;
 
     public static Dictionary<AudioClipName, AudioClip> audioClips =
         new Dictionary<AudioClipName, AudioClip>();
@@ -18,22 +20,24 @@ public static class AudioManager
     /// <summary>
     /// Gets whether or not the audio manager has been initialized
     /// </summary>
-    public static bool Initialized
-    {
-        get { return initialized; }
-    }
 
-    public static AudioSource AudioSource { get => audioSource; set => audioSource = value; }
+    public static bool SfxInitialized { get => sfxInitialized; }
+    public static bool MusicInitialized { get => musicInitialized; }
 
     /// <summary>
     /// Initializes the audio manager
     /// </summary>
     /// <param name="source">audio source</param>
-    public static void Initialize(AudioSource source)
+    public static void Initialize(MusicPlayer player)
     {
-        initialized = true;
-        audioSource = source;
-        gameAudioSource = source.GetComponent<GameAudioSource>();
+        musicPlayer = player;
+        musicInitialized = true;
+    }
+
+    public static void Initialize(SoundEffectsPlayer player)
+    {
+        sfxPlayer = player;
+        sfxInitialized = true;
 
         foreach (AudioClipName clipName in Enum.GetValues(typeof(AudioClipName)))
         {
@@ -51,43 +55,43 @@ public static class AudioManager
     /// Plays the audio clip with the given name
     /// </summary>
     /// <param name="name">name of the audio clip to play</param>
-    public static void PlayOnce(AudioClipName name, float volume=1f)
+    public static void PlaySfx(AudioClipName name, float volume=1f)
     {
         if (audioClips.ContainsKey(name))
         {
-            audioSource.PlayOneShot(audioClips[name], volume);
+            sfxPlayer.AudioSource.PlayOneShot(audioClips[name], volume);
         }
     }
 
     public static void PlayMusic(AudioClipName clipName, float volume=1f)
     {
-        audioSource.Stop();
+        musicPlayer.AudioSource.Stop();
         
         if (!audioClips.ContainsKey(clipName))
         {
             Debug.LogWarning("Audio file {name} missing");
             return;
         }
-        audioSource.clip = audioClips[clipName];
-        audioSource.volume = volume;
-        audioSource.Play();
+        musicPlayer.AudioSource.clip = audioClips[clipName];
+        musicPlayer.AudioSource.volume = volume;
+        musicPlayer.AudioSource.Play();
     }
 
     public static void PlayMusicFadeIn(AudioClipName clipName, float volume, float fadeDuration, float fadeDelay = 0)
     {
-        gameAudioSource.StopAllCoroutines();
-        gameAudioSource.PlayMusicFadeIn(audioClips[clipName], volume, fadeDuration, fadeDelay);
+        musicPlayer.StopAllCoroutines();
+        musicPlayer.PlayMusicFadeIn(audioClips[clipName], volume, fadeDuration, fadeDelay);
     }
 
-    public static void FadeInAudio(float finalVolume, float fadeDuration, float fadeDelay=0)
+    public static void FadeInMusic(float finalVolume, float fadeDuration, float fadeDelay=0)
     {
-        gameAudioSource.StopAllCoroutines();
-        gameAudioSource.StartCoroutine(gameAudioSource.FadeInAudio(finalVolume, fadeDuration, fadeDelay));
+        musicPlayer.StopAllCoroutines();
+        musicPlayer.StartCoroutine(musicPlayer.FadeInAudio(finalVolume, fadeDuration, fadeDelay));
     }
 
-    public static void FadeOutAudio(float finalVolume, float fadeDuration, float fadeDelay=0)
+    public static void FadeOutMusic(float finalVolume, float fadeDuration, float fadeDelay=0)
     {
-        gameAudioSource.StopAllCoroutines();
-        gameAudioSource.StartCoroutine(gameAudioSource.FadeOutAudio(finalVolume, fadeDuration, fadeDelay));
+        musicPlayer.StopAllCoroutines();
+        musicPlayer.StartCoroutine(musicPlayer.FadeOutAudio(finalVolume, fadeDuration, fadeDelay));
     }
 }
