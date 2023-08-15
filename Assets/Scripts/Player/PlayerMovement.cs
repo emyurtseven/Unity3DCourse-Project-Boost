@@ -1,17 +1,14 @@
 using UnityEngine;
 
+/// <summary>
+/// Manages player input and rocket movement. 
+/// Physical movement values are set in GameManager object, not here.
+/// </summary>
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] bool controlsEnabled = true;
-
-    [SerializeField] float mainThrustForce = 20f;
-    [SerializeField] float rotationThrustForce = 80f;
-
     [SerializeField] GameObject mainThruster;
     [SerializeField] GameObject sideThruster;
-
-    [SerializeField] public AudioClip mainThrusterSfx;
-    [SerializeField] public AudioClip sideThrusterSfx;
 
     [SerializeField] float thrusterLightIntensity;
     [SerializeField] float thrusterLightLerpDuration;
@@ -20,6 +17,9 @@ public class PlayerMovement : MonoBehaviour
     ParticleSystem sideThrustParticles;
     ThrusterAudio mainThrusterAudio;
     ThrusterAudio sideThrusterAudio;
+
+    float mainThrusterForce = DefaultGameValues.PlayerMainThrusterForce;
+    float sideThrusterForce = DefaultGameValues.PlayerSideThrusterForce;
 
     bool thrustKeyPressed;
     float horizontalInput;
@@ -30,12 +30,13 @@ public class PlayerMovement : MonoBehaviour
     float timeElapsed;
 
     public bool ControlsEnabled { get { return controlsEnabled; } set { controlsEnabled = value; } }
-    public float MainThrustForce { get => mainThrustForce; set => mainThrustForce = value; }
+    public float MainThrusterForce { get => mainThrusterForce; set => mainThrusterForce = value; }
+    public float SideThrusterForce { get => sideThrusterForce; set => sideThrusterForce = value; }
 
+    // get object references
     private void Awake() 
     {
         myRigidbody = GetComponent<Rigidbody>();
-
         mainThrusterAudio = mainThruster.GetComponent<ThrusterAudio>();
         sideThrusterAudio = sideThruster.GetComponent<ThrusterAudio>();
         mainThrustParticles = mainThruster.GetComponent<ParticleSystem>();
@@ -59,13 +60,19 @@ public class PlayerMovement : MonoBehaviour
         LerpThrusterLight();
     }
 
-
+    /// <summary>
+    /// Checks for input using old system.
+    /// </summary>
     private void ProcessInput()
     {
         thrustKeyPressed = Input.GetKey(KeyCode.Space);
         horizontalInput = Input.GetAxisRaw("Horizontal");
     }
 
+    /// <summary>
+    /// This is an automated version that supplies input values instead of getting it from the player.
+    /// Used in start menu rocket movement animations.
+    /// </summary>
     public void ProcessInput(bool spaceKeyPressed, float horizontalAxisValue)
     {
         thrustKeyPressed = spaceKeyPressed;
@@ -80,12 +87,11 @@ public class PlayerMovement : MonoBehaviour
         if (thrustKeyPressed)
         {
             mainThrustParticles.Play();
-            myRigidbody.AddRelativeForce(Vector3.up * mainThrustForce, ForceMode.Force);
+            myRigidbody.AddRelativeForce(Vector3.up * mainThrusterForce, ForceMode.Force);
             mainThrusterAudio.FadeInAudio();
         }
         else
         {
-            // mainThrusterLight.intensity = lightIntensity * 0;
             mainThrustParticles.Stop();
             mainThrusterAudio.FadeOutAudio();
         }
@@ -105,7 +111,7 @@ public class PlayerMovement : MonoBehaviour
 
             // Set angular v to 0 to prevent conflicts with physics system
             myRigidbody.angularVelocity = Vector3.zero;
-            transform.Rotate(Vector3.forward * -horizontalInput * rotationThrustForce * Time.deltaTime);
+            transform.Rotate(Vector3.forward * -horizontalInput * sideThrusterForce * Time.deltaTime);
             sideThrusterAudio.FadeInAudio();
         }
         else
@@ -115,6 +121,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Fades in and out light from thrust.
+    /// </summary>
     private void LerpThrusterLight()
     {
         if (thrustKeyPressed)

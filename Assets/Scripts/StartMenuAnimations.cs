@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Manages rocket animations on start menu. 
+/// Using animator components seemed more difficult so I fake player inputs 
+/// from here to actually fly rockets. This is just for visual additions to start scene.
+/// </summary>
 public class StartMenuAnimations : MonoBehaviour
 {
     
@@ -56,7 +61,7 @@ public class StartMenuAnimations : MonoBehaviour
 
         PlayerMovement landingRocketMovement = landingRocket.GetComponent<PlayerMovement>();
         landingRocketMovement.ControlsEnabled = false;
-        landingRocketMovement.MainThrustForce = landingRocketThrust;
+        landingRocketMovement.MainThrusterForce = landingRocketThrust;
 
         StartCoroutine(SimulateLanding(landingRocketRigidbody, landingRocketMovement));
     }
@@ -67,7 +72,7 @@ public class StartMenuAnimations : MonoBehaviour
         PlayerMovement departingRocketMovement = departingRocket.GetComponent<PlayerMovement>();
         Rigidbody departingRocketRigidbody = departingRocket.GetComponent<Rigidbody>();
         departingRocketMovement.ControlsEnabled = false;
-        departingRocketMovement.MainThrustForce = departingRocketThrust;
+        departingRocketMovement.MainThrusterForce = departingRocketThrust;
         departingRocketRigidbody.useGravity = true;
 
         StartCoroutine(SimulateLiftoff(departingRocket, departingRocketRigidbody, departingRocketMovement));

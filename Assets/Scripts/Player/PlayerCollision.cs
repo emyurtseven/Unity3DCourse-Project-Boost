@@ -2,15 +2,16 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public class CollisionHandler : MonoBehaviour
+/// <summary>
+/// Handles all player collision.
+/// </summary>
+public class PlayerCollision : MonoBehaviour
 {
     [SerializeField] float respawnDelay = 2f;
-    [SerializeField] float finishConditionTimer = 2f;
-    [SerializeField] float deathThresholdVelocity = 2f;
+    [SerializeField] float finishConditionTimer = 2f;       // min time required to spend stationary on landing pad
+    [SerializeField] float deathThresholdVelocity = DefaultGameValues.DeathThresholdVelocity;     
+    [SerializeField] bool isInvulnerable = false;       // FOR DEBUGGING
 
-    [SerializeField] bool isInvulnerable = false;
-
-    GameManager gameManager;
     ExplodeOnImpact exploder;
     CapsuleCollider bodyCollider;
     BoxCollider landingCollider;
@@ -24,42 +25,63 @@ public class CollisionHandler : MonoBehaviour
     public float RespawnDelay {get { return respawnDelay; } }
     public bool IsInteractable {get { return isInteractable; } set { isInteractable = value; } }
 
+    public float DeathThresholdVelocity { get => deathThresholdVelocity; set => deathThresholdVelocity = value; }
+
     void Awake()
     {
-        gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
         exploder = GetComponent<ExplodeOnImpact>();
         bodyCollider = GetComponent<CapsuleCollider>();
         landingCollider = GetComponent<BoxCollider>();
         myRigidbody = GetComponent<Rigidbody>();
     }
 
-    void Update()
+    /// <summary>
+    /// Coroutine that checks if the player spends required time on finish for victory.
+    /// </summary>
+    private IEnumerator CheckVictoryCondition()
     {
-        if (isTouchingFinish && isInteractable && myRigidbody.velocity.magnitude <= Mathf.Epsilon)
+        while (isTouchingFinish)
         {
-            timer += Time.deltaTime;
+            // increment timer only if player is stationary
+            if (isInteractable && myRigidbody.velocity.magnitude <= Mathf.Epsilon)
+            {
+                timer += Time.deltaTime;
+            }
 
+            // enough time passed, player is victorious
             if (timer >= finishConditionTimer)
             {
                 HandlePlayerVictory();
                 isTouchingFinish = false;
+                yield break;
             }
+            yield return new WaitForEndOfFrame();
         }
     }
 
-    private void OnCollisionEnter(Collision collision) 
+    private void OnCollisionEnter(Collision collision)
     {
-        float relativeVelocity = collision.relativeVelocity.magnitude;
-
+        // Discard event if not interactable
         if (!isInteractable)
         {
             return;
         }
 
+        EvaluateCollision(collision);
+    }
+
+    /// <summary>
+    /// Checks if a collision is fatal, or properly with finish target.
+    /// </summary>
+    /// <param name="collision"> Collision event from unity engine </param>
+    private void EvaluateCollision(Collision collision)
+    {
+        float relativeVelocity = collision.relativeVelocity.magnitude;
+
         // If upper rocket body touches anything: insta-death. Even if it's launch pad or finish.
         // If collision velocity > threshold: insta-death. Even if it's launch pad or finish.
         if (collision.GetContact(0).thisCollider == bodyCollider ||
-            relativeVelocity > deathThresholdVelocity)
+                                relativeVelocity > deathThresholdVelocity)
         {
             HandlePlayerCrash(collision);
         }
@@ -73,15 +95,18 @@ public class CollisionHandler : MonoBehaviour
             {
                 timer = 0f;
                 isTouchingFinish = true;
+                StartCoroutine(CheckVictoryCondition());
                 return;
             }
             else
             {
+                // if lower body touches anything other than safe spots, insta-death
                 HandlePlayerCrash(collision);
             }
         }
     }
 
+    // We're not touching finish anymore, so victory condition is cancelled
     private void OnCollisionExit(Collision collision) 
     {
         if (collision.gameObject.tag == "Finish")
@@ -90,27 +115,27 @@ public class CollisionHandler : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Explodes rocket and respawns player.
+    /// </summary>
+    /// <param name="collisionData"></param>
     private void HandlePlayerCrash(Collision collisionData)
     {
-        if (exploder == null)
-        {
-            return;
-        }
-        
-        if (isInvulnerable)
+        if (exploder == null || isInvulnerable)
         {
             return;
         }
 
         exploder.ExplodeObject(collisionData);
-        // gameManager = FindObjectOfType<GameManager>();
-        gameManager.RespawnPlayer();
+        GameManager.Instance.RespawnPlayer();
     }
 
+    /// <summary>
+    /// Plays victory effect and load next scene.
+    /// </summary>
     private void HandlePlayerVictory()
     {
         GameObject.FindGameObjectWithTag("Finish").GetComponentInChildren<ParticleSystem>().Play();
-        // gameManager = FindObjectOfType<GameManager>();
-        gameManager.LoadNextLevel();
+        GameManager.Instance.LoadNextLevel();
     }
 }

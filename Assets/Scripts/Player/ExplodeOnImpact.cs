@@ -3,21 +3,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Replaces the object with a pre-fractured prefab and adds force to pieces to simulate an explosion.
+/// Pieces are put in a temporary container and destroyed after a delay.
+/// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class ExplodeOnImpact : MonoBehaviour
 {
-
     [Header("Auto-explode options")]
     [SerializeField] bool willAutoExplode;
     [SerializeField] bool hasParticleEffects;
     [Tooltip("Only used if auto-explode is enabled.")]
     [SerializeField] float thresholdVelocity;
+    [SerializeField] string excludedObjectTag = string.Empty;
 
     [Header("Prefab of the object")]
     [SerializeField] GameObject explodedObjectPrefab;
     [SerializeField] GameObject explosionPrefab;
-    [SerializeField] AudioClip explosionSfx;
-
 
     [Header("Explosion parameters")]
     [Range(0, 1000)]
@@ -25,19 +27,24 @@ public class ExplodeOnImpact : MonoBehaviour
     [Range(0, 1000)]
     [SerializeField] float maxExplosionForce;
     [SerializeField] int brokenPartCount;
-    [SerializeField] float debrisPersistTime = 2f;
 
     // Name of the parent object to be created that holds the broken part objects
     string containerName = "DebrisContainer";
 
-    Transform containerTransform;
     GameObject debrisContainer;
-
-    public float DebrisPersistTime { get { return debrisPersistTime; } set { debrisPersistTime = value; } }
-    public Transform ContainerTransform {get { return containerTransform; } }
     
+    /// <summary>
+    /// If auto explode is enabled, object explodes on collision depending on velocity.
+    /// An optional tag can be passed to specify objects that are excluded from triggering the explosion.
+    /// </summary>
+    /// <param name="other"></param>
     private void OnCollisionEnter(Collision other) 
     {
+        if (other.gameObject.tag == excludedObjectTag)
+        {
+            return;
+        }
+
         if (willAutoExplode)
         {
             float velocity = GetComponent<Rigidbody>().velocity.magnitude;
@@ -49,45 +56,52 @@ public class ExplodeOnImpact : MonoBehaviour
     }
 
     /// <summary>
-    /// Explodes a duplicate gameObject mesh into many pieces.
+    /// Explodes a duplicate gameObject mesh into many pieces, while keeping original object.
     /// </summary>
-    /// <param name="collision"> Collision parameter is passed in CollisionHandler() script.</param>
+    /// <param name="collision"> Collision parameter is passed in from PlayerCollision script.</param>
     public void ExplodeObject(Collision collision)
     {
-        CreateDebrisContainer();
+        debrisContainer = new GameObject(containerName);
+        
+        Transform containerTransform = debrisContainer.transform;
 
         // Create a duplicate game object to be exploded
         GameObject explodedObject = Instantiate(explodedObjectPrefab,
                                                 transform.position,
                                                 transform.rotation);
+                                                
         UnityEngine.Random.InitState((int)Time.time);
         Vector3 collisionPoint = collision.contacts[0].point;
         float colliderRadius = GetComponent<Collider>().bounds.extents.magnitude;
 
+        // Play explosion particles if applicable
         if (hasParticleEffects)
         {
             Instantiate(explosionPrefab, collisionPoint, Quaternion.identity);
         }
+
         // This creates the mesh pieces
         new ScamScatter.Scatter().Run(this, null, explodedObject, brokenPartCount, containerTransform);
 
-        AdjustBrokenPartCount();
-        AddExplosionForce(collisionPoint, colliderRadius);
+        AdjustBrokenPartCount(containerTransform);
+        AddExplosionForce(collisionPoint, colliderRadius, containerTransform);
 
-        GetComponent<AudioSource>().PlayOneShot(explosionSfx, 1);
+        AudioManager.PlaySfx(AudioClipName.RocketExplosion, 1);
 
+        debrisContainer.AddComponent<FadeDebris>();
         StartCoroutine(DisableComponents());
-        StartCoroutine(FadeDebris());
-    }
-
-    private void CreateDebrisContainer()
-    {
-        debrisContainer = new GameObject(containerName);
-        containerTransform = debrisContainer.transform;
     }
 
     /// <summary>
-    /// Disables and hides original object.
+    /// Creates a temp gameobject to hold debris pieces.
+    /// </summary>
+    private void CreateDebrisContainer()
+    {
+
+    }
+
+    /// <summary>
+    /// Disables and hides the original object.
     /// </summary>
     IEnumerator DisableComponents()
     {
@@ -103,20 +117,17 @@ public class ExplodeOnImpact : MonoBehaviour
             item.enabled = false;
         }
 
-        // Deactivate every child onject except the debris container
+        // Deactivate every child onject 
         foreach (Transform child in transform)
         {
-            if (child.name != containerName)
-            {
-                child.gameObject.SetActive(false);
-            }
+            child.gameObject.SetActive(false);
         }
     }
 
     /// <summary>
     /// Destroys excess broken parts that were instantiated.
     /// </summary>
-    private void AdjustBrokenPartCount()
+    private void AdjustBrokenPartCount(Transform containerTransform)
     {
         for (int i = 0; i < containerTransform.childCount; i++)
         {
@@ -128,6 +139,7 @@ public class ExplodeOnImpact : MonoBehaviour
             }
             else
             {
+                // set debris pieces to Debris layer, to avoid collision with player
                 piece.gameObject.layer = LayerMask.NameToLayer("Debris");
             }
         }
@@ -136,9 +148,7 @@ public class ExplodeOnImpact : MonoBehaviour
     /// <summary>
     /// Adds explosion force to each broken part.
     /// </summary>
-    /// <param name="collisionPoint"></param>
-    /// <param name="colliderRadius"></param>
-    private void AddExplosionForce(Vector3 collisionPoint, float colliderRadius)
+    private void AddExplosionForce(Vector3 collisionPoint, float colliderRadius, Transform containerTransform)
     {
         foreach (Transform piece in containerTransform)
         {
@@ -146,31 +156,5 @@ public class ExplodeOnImpact : MonoBehaviour
             float force = UnityEngine.Random.Range(minExplosionForce, maxExplosionForce);
             rb.AddExplosionForce(force, collisionPoint, colliderRadius);
         }
-    }
-
-
-    /// <summary>
-    /// Gradually decreases the alpha of mesh renderers to gently fade out the pieces, then destroys the game object.
-    /// </summary>
-    /// <returns></returns>
-    private IEnumerator FadeDebris()
-    {
-        yield return new WaitForSeconds(debrisPersistTime);
-
-        float alpha = 1;
-        while (alpha > 0)
-        {
-            alpha -= 0.02f;
-            Color color = new Color(1, 1, 1, alpha);
-
-            foreach (Transform fragment in containerTransform)
-            {
-                fragment.gameObject.GetComponent<MeshRenderer>().materials[0].color = color;
-            }
-
-            yield return new WaitForSeconds(Time.deltaTime);
-        }
-
-        Destroy(debrisContainer);
     }
 }

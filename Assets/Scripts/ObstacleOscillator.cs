@@ -2,9 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Moves attached object back-forth between start pos and set position vector.
+/// </summary>
 public class ObstacleOscillator : MonoBehaviour
 {
+    [Tooltip("Object will move here before coming back")]
     [SerializeField] Vector3 movementVector;
+    [Tooltip("Period in seconds")]
     [SerializeField] float movementPeriod;
 
     Vector3 startingPosition;

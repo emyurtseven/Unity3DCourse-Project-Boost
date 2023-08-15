@@ -434,12 +434,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controlsEnabled: 0
-  mainThrustForce: 20
-  rotationThrustForce: 160
   mainThruster: {fileID: 8937838848110175192}
   sideThruster: {fileID: 39821778936897282}
-  mainThrusterSfx: {fileID: 8300000, guid: 69e923ea9096b964bacc2f5d3fe0b640, type: 3}
-  sideThrusterSfx: {fileID: 8300000, guid: 1b33ce310a5efb246a737656efedede2, type: 3}
   thrusterLightIntensity: 1.5
   thrusterLightLerpDuration: 0.2
 --- !u!114 &6818582476457163167
@@ -473,10 +469,10 @@ MonoBehaviour:
   willAutoExplode: 0
   hasParticleEffects: 1
   thresholdVelocity: 0
+  excludedObjectTag: 
   explodedObjectPrefab: {fileID: 2525026665585652842, guid: c0d577831657ab74ab09e2fc4b8f6194, type: 3}
   explosionPrefab: {fileID: 1489096066996960305, guid: 3089b741182875f47b071a5308b3a1f7, type: 3}
-  explosionSfx: {fileID: 8300000, guid: 58f8520c3dc493642b267d3f37b3449f, type: 3}
-  minExplosionForce: 100
+  minExplosionForce: 150
   maxExplosionForce: 250
   brokenPartCount: 50
   debrisPersistTime: 2.5

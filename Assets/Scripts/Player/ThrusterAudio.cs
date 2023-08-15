@@ -1,9 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// There's no set audioclip in this script,
-/// it plays whichever AudioSource component is attached to the gameObject.
-/// This set up allows multiple continuous sound effects to fade in/out independently.
+/// Manages thrust sounds, attached to thruster child objects under rocket.
+/// This adjusts whichever AudioSource component is attached to the gameObject.
 /// </summary>
 public class ThrusterAudio : MonoBehaviour
 {    
@@ -11,6 +10,7 @@ public class ThrusterAudio : MonoBehaviour
     [SerializeField] AnimationCurve volumeCurve;
     [SerializeField] AnimationCurve pitchCurve;
 
+    // Set which sound effect will be played
     [SerializeField] AudioClipName audioClipName;
 
     AudioSource audioSource;
@@ -24,23 +24,13 @@ public class ThrusterAudio : MonoBehaviour
 
     bool thrusting = false;     // Are we thrusting in any given frame?
 
-
-    void Awake()
-    {
-        audioSource = GetComponent<AudioSource>();
-    }
-
     private void Start() 
     {
-        if (audioClipName == AudioClipName.MainThruster)
-        {
-            audioSource.clip = transform.parent.GetComponent<PlayerMovement>().mainThrusterSfx;
-        }
-        else if (audioClipName == AudioClipName.SideThruster)
-        {
-            audioSource.clip = transform.parent.GetComponent<PlayerMovement>().sideThrusterSfx;
-        }
+        audioSource = GetComponent<AudioSource>();
 
+        // set the AudioClip
+        audioSource.clip = AudioManager.audioClips[audioClipName];
+        
         // Get target time values from curves set in the editor
         targetVolumeTime = volumeCurve.keys[1].time;
         targetPitchTime = pitchCurve.keys[1].time;
@@ -83,7 +73,7 @@ public class ThrusterAudio : MonoBehaviour
     }
 
     /// <summary>
-    /// Called in player Movement script, while key is pressed.
+    /// Called in PlayerMovement script, while input key is pressed.
     /// </summary>
     public void FadeInAudio()
     {
@@ -114,6 +104,27 @@ public class ThrusterAudio : MonoBehaviour
             pitchTimer = targetPitchTime;
 
             Invoke("StopClip", targetVolumeTime);       // Stop audioclip after volume timer is finished
+        }
+    }
+
+    /// <summary>
+    /// Pauses thruster audio. Called in IngameMenuManager script when player pauses game.
+    /// </summary>
+    /// <param name="isPaused"></param>
+    public void PauseAudio(bool isPaused)
+    {
+        if (!this.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        if (isPaused)
+        {
+            audioSource.Pause();
+        }
+        else
+        {
+            audioSource.Play();
         }
     }
 

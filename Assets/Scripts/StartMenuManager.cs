@@ -9,7 +9,6 @@ public class StartMenuManager : MonoBehaviour
 {
     [SerializeField] int firstLevelSceneIndex = 1;
 
-
     [Header("Panel object references")]
     [SerializeField] GameObject startMenuCanvas;
     [SerializeField] GameObject optionsMenu;
@@ -20,55 +19,162 @@ public class StartMenuManager : MonoBehaviour
     [SerializeField] float volume;
     [SerializeField] float menuMusicStartDelay = 1f;
     [SerializeField] float menuMusicFadeInDuration = 1f;
-    [SerializeField] AudioSource menuMusicSource;
+
+    [Header("Scene object references")]
     [SerializeField] Slider volumeSlider;
     [SerializeField] TextMeshProUGUI volumeValueText;
+    [SerializeField] GameObject musicOnButton;
+    [SerializeField] GameObject musicOffButton;
+    [SerializeField] GameObject difficultyNormalButton;
+    [SerializeField] GameObject difficultyHardButton;
 
-    bool musicOn;
+    MusicPlayer musicPlayer;
 
     int loadedLevel;
+    int musicOn = 1;
 
     Animator mainCameraAnimator;
-    GameManager gameManager;
 
     private void Start() 
     {
         mainCameraAnimator = Camera.main.gameObject.GetComponent<Animator>();
-        gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
-        AudioManager.PlayMusicFadeIn(AudioClipName.StartMenuMusic, 1, menuMusicFadeInDuration, menuMusicStartDelay);
+
+        musicPlayer = AudioManager.GetMusicPlayer(0);
+
+        LoadSavedGame();
+        LoadSoundSettings();
+        LoadDifficultySettings();
+
+        volumeSlider.value = AudioListener.volume;
+    }
+
+    private void LoadSavedGame()
+    {
+        if (PlayerPrefs.HasKey(PlayerPreferenceKeys.SavedLevel))
+        {
+            GameManager.Instance.CurrentLevel = PlayerPrefs.GetInt(PlayerPreferenceKeys.SavedLevel);
+        }
+        else
+        {
+            GameManager.Instance.CurrentLevel = 1;
+        }
+    }
+
+    private void LoadSoundSettings()
+    {
+        if (PlayerPrefs.HasKey(PlayerPreferenceKeys.Volume))
+        {
+            AudioListener.volume = PlayerPrefs.GetFloat(PlayerPreferenceKeys.Volume);
+        }
+        else
+        {
+            AudioListener.volume = 1;
+        }
+
+        musicOn = PlayerPrefs.GetInt(PlayerPreferenceKeys.MusicOn, 1);
+
+        if (musicOn == 1)
+        {
+            SetMusicOn();
+        }
+        else if (musicOn == 0)
+        {
+            SetMusicOff();
+        }
+    }
+
+    private void LoadDifficultySettings()
+    {
+        string difficulty = PlayerPrefs.GetString(PlayerPreferenceKeys.Difficulty, DefaultGameValues.NormalDifficulty);
+        SetDifficulty(difficulty);
     }
 
     public void SetVolume(float volume)
     {
         AudioListener.volume = volume;
-        volumeValueText.text = volume.ToString() + " %";
+        volumeValueText.text = volume.ToString("P0");
     }
 
-    public void ToggleMusic(bool value)
+    public void SetMusicOn()
     {
+        musicPlayer.Mute(false);
+        musicOn = 1;
+        musicOnButton.GetComponent<Image>().enabled = true;
+        musicOffButton.GetComponent<Image>().enabled = false;
+        musicOnButton.GetComponent<Button>().interactable = false;
+        musicOffButton.GetComponent<Button>().interactable = true;
 
+        if (!musicPlayer.IsPlaying)
+        {
+            AudioManager.PlayMusicFadeIn(0, AudioClipName.StartMenuMusic, DefaultGameValues.MusicMaxVolume,
+                                             menuMusicFadeInDuration, menuMusicStartDelay);
+        }
     }
 
-    public void ApplyVolumeSettings()
+    public void SetMusicOff()
     {
-        PlayerPrefs.SetFloat("masterVolume", AudioListener.volume);
+        musicPlayer.Mute(true);
+        musicOn = 0;
+        musicOnButton.GetComponent<Image>().enabled = false;
+        musicOffButton.GetComponent<Image>().enabled = true;
+        musicOnButton.GetComponent<Button>().interactable = true;
+        musicOffButton.GetComponent<Button>().interactable = false; 
+    }
+
+    public void SetDifficulty(string value)
+    {
+        // value is checked to avoid possible wrong string reference set in editor
+        if (value == DefaultGameValues.NormalDifficulty)
+        {
+            GameManager.Instance.Difficulty = value;
+            difficultyNormalButton.GetComponent<Image>().enabled = true;
+            difficultyHardButton.GetComponent<Image>().enabled = false;
+
+            difficultyNormalButton.GetComponent<Button>().interactable = false;
+            difficultyHardButton.GetComponent<Button>().interactable = true;
+        }
+        else if (value == DefaultGameValues.HardDifficulty)
+        {
+            GameManager.Instance.Difficulty = value;
+            difficultyNormalButton.GetComponent<Image>().enabled = false;
+            difficultyHardButton.GetComponent<Image>().enabled = true;
+
+            difficultyNormalButton.GetComponent<Button>().interactable = true;
+            difficultyHardButton.GetComponent<Button>().interactable = false;
+        }
+        else
+        {
+            Debug.LogWarning($"Difficulty string {value} is erroneous." + 
+                                " Compare the value on button OnClick() UI element with DefaultGameValues class");
+        }
+
+        PlayerPrefs.SetString(PlayerPreferenceKeys.Difficulty, GameManager.Instance.Difficulty);
+    }
+
+    public void ApplySoundSettings()
+    {
+        PlayerPrefs.SetFloat(PlayerPreferenceKeys.Volume, AudioListener.volume);
+        PlayerPrefs.SetInt(PlayerPreferenceKeys.MusicOn, musicOn);
     }
 
     public void OnNewGameConfirmed()
     {
-        AudioManager.FadeOutMusic(0, 1f);
-        gameManager.LevelStartedFromMainMenu = true;
+        AudioManager.FadeOutMusic(0, 0, 1f);
+        GameManager.Instance.LevelStartedFromMainMenu = true;
+        GameManager.Instance.CurrentLevel = 1;
+
+        PlayerPrefs.SetInt(PlayerPreferenceKeys.SavedLevel, 1);
         StartCoroutine(StartSceneTransition(firstLevelSceneIndex));
     }
 
     public void OnContinueClicked()
     {
-        if (PlayerPrefs.HasKey("SavedLevel"))
+        if (PlayerPrefs.HasKey(PlayerPreferenceKeys.SavedLevel))
         {
-            loadedLevel = PlayerPrefs.GetInt("SavedLevel", 1);
+            loadedLevel = PlayerPrefs.GetInt(PlayerPreferenceKeys.SavedLevel, 1);
             string template = $"Continue to level {loadedLevel} ?";
             continueConfirmPanel.SetActive(true);
-            continueConfirmPanel.GetComponent<TextMeshProUGUI>().text = template;
+            continueConfirmPanel.GetComponentInChildren<TextMeshProUGUI>().text = template;
         }
         else
         {
@@ -81,19 +187,14 @@ public class StartMenuManager : MonoBehaviour
     /// </summary>
     public void OnContinueConfirmed()
     {
-        AudioManager.FadeOutMusic(0, 1f);
-        gameManager.LevelStartedFromMainMenu = true;
+        AudioManager.FadeOutMusic(0, 0, 1f);
+        GameManager.Instance.LevelStartedFromMainMenu = true;
+        GameManager.Instance.CurrentLevel = loadedLevel;
         StartCoroutine(StartSceneTransition(loadedLevel));
-    }
-
-    public void OnSettingsClicked()
-    {
-        optionsMenu.SetActive(!optionsMenu.activeSelf);
     }
 
     public void OnQuitClicked()
     {
-        Debug.Log("Quit");
         Application.Quit();
     }
 

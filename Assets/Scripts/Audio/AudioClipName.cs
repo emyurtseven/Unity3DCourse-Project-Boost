@@ -5,7 +5,7 @@ public enum AudioClipName
 {
     MainThruster,
     SideThruster,
-    PlayerExplosion,
+    RocketExplosion,
     StartMenuMusic,
     LevelMusic,
     LevelFinished

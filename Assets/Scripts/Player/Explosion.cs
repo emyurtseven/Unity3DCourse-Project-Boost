@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Attached to explosion object
+/// Attached to pre-fractured exploding object that is instantiated in ExplodeOnImpact script.
 /// </summary>
 public class Explosion : MonoBehaviour
 {
@@ -38,6 +38,9 @@ public class Explosion : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Fades in and out the light from explosion.
+    /// </summary>
     private void LerpExplosionLight()
     {
         float t = 1 - timeElapsed / explosionDuration;

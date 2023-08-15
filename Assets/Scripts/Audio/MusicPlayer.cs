@@ -4,35 +4,44 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// An audio source for the entire game
+/// Used for playing music with fade-in, fade-out options.
+/// Attach this to a gameobject with AudioSource component.
 /// </summary>
+[RequireComponent(typeof(AudioSource))]
 public class MusicPlayer : MonoBehaviour
 {
-    AudioSource audioSource;
+    AudioSource audioSource;    // AudioSource component attached to this object.
+    bool isPlaying;             // are we playing right now?
 
-    public AudioSource AudioSource { get => audioSource; set => audioSource = value; }
+    public AudioSource AudioSource { get => audioSource; }
+    public bool IsPlaying { get => GetComponent<AudioSource>().isPlaying; }
 
-    /// <summary>
-    /// Awake is called before Start
-    /// </summary>
     void Awake()
 	{
-        // make sure we only have one of this game object
-        // in the game
-        if (!AudioManager.MusicInitialized)
-        {
-            // initialize audio manager and persist audio source across scenes
-            AudioManager.Initialize(this);
-            audioSource = GetComponent<AudioSource>();
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            // duplicate game object, so destroy
-            Destroy(gameObject);
-        }
+        // initialize audio manager and persist musicplayer object across scenes
+        DontDestroyOnLoad(gameObject);
+        audioSource = GetComponent<AudioSource>();
+        
     }
 
+    // Mute/Unmute music player
+    public void Mute(bool isMuted)
+    {
+        audioSource.mute = isMuted;
+    }
+
+    public void Stop()
+    {
+        audioSource.Stop();
+    }
+
+    /// <summary>
+    /// Starts music with fade in effect.
+    /// </summary>
+    /// <param name="clip"> AudioClip to play </param>
+    /// <param name="volume"> Target volume to reach </param>
+    /// <param name="fadeDuration"> Fade-in effect duration in seconds </param>
+    /// <param name="startDelay"> Start after this many seconds </param>
     public void PlayMusicFadeIn(AudioClip clip, float volume, float fadeDuration, float startDelay = 0)
     {
         audioSource.Stop();
@@ -42,32 +51,41 @@ public class MusicPlayer : MonoBehaviour
         StartCoroutine(FadeInAudio(volume, fadeDuration, startDelay));
     }
 
+    /// <summary>
+    /// Coroutine that gradually increases music player volume.
+    /// </summary>
     public IEnumerator FadeInAudio(float finalVolume, float fadeDuration, float startDelay=0)
     {
         float volume = audioSource.volume;
-        yield return new WaitForSeconds(startDelay);
+        yield return new WaitForSecondsRealtime(startDelay);
 
-        audioSource.Play();
+        if (!audioSource.isPlaying)
+        {
+            audioSource.Play();
+        }
 
         while (volume <= finalVolume)
         {
             // increment volume and pitch timer values
-            volume += (Time.deltaTime / fadeDuration);
+            volume += (Time.unscaledDeltaTime / (fadeDuration * 3));
             // set volume based on volume curve set in editor, mapping timer to volume
             audioSource.volume = volume;
             yield return new WaitForEndOfFrame();
         }
     }
 
+    /// <summary>
+    /// Coroutine that gradually decreases music player volume.
+    /// </summary>
     public IEnumerator FadeOutAudio(float finalVolume, float fadeDuration, float fadeDelay= 0)
     {
         float volume = audioSource.volume;
-        yield return new WaitForSeconds(fadeDelay);
+        yield return new WaitForSecondsRealtime(fadeDelay);
 
         while (volume >= finalVolume)
         {
             // increment volume and pitch timer values
-            volume -= (Time.deltaTime / fadeDuration);
+            volume -= (Time.unscaledDeltaTime / fadeDuration);
             // set volume based on volume curve set in editor, mapping timer to volume
             audioSource.volume = volume;
             yield return new WaitForEndOfFrame();

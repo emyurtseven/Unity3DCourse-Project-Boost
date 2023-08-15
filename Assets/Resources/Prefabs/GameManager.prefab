@@ -141,7 +141,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e8e24c3faa9ea24aae0cee78f4c5b02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gravityValueNormal: -8
+  dragValueNormal: 0.6
+  mainThrusterForceNormal: 20
+  sideThrusterForceNormal: 150
+  deathThresholdVelocityNormal: 6
+  gravityValueHard: -12
+  dragValueHard: 0.4
+  mainThrusterForceHard: 20
+  sideThrusterForceHard: 90
+  deathThresholdVelocityHard: 4.5
   skyboxRotationSpeed: 1
-  tutorial: {fileID: 0}
   levelFinishedSfx: {fileID: 8300000, guid: 46184c24aae58d6448400821a7715c93, type: 3}
-  levelLoadDelay: 1.2
+  levelLoadDelay: 1
